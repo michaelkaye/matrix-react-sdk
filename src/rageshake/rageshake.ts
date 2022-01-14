@@ -70,31 +70,37 @@ export class ConsoleLogger {
     private log(level: string, ...args: (Error | DOMException | object | string)[]): void {
         // We don't know what locale the user may be running so use ISO strings
         const ts = new Date().toISOString();
-
+	const jsonline = {"timestamp": ts,
+		    "severity": level
+	}
         // Convert objects and errors to helpful things
-        args = args.map((arg) => {
+        args.forEach(arg => {
             if (arg instanceof DOMException) {
-                return arg.message + ` (${arg.name} | ${arg.code})`;
+                jsonline["message"] = arg.message
+		jsonline["name"] = arg.name
+		jsonline["code"] = arg.code
             } else if (arg instanceof Error) {
-                return arg.message + (arg.stack ? `\n${arg.stack}` : '');
+                jsonline["message"] = arg.message
+		jsonline["stack"] = arg.stack
             } else if (typeof (arg) === 'object') {
                 try {
-                    return JSON.stringify(arg);
+                    jsonline["message"] = JSON.stringify(arg)
                 } catch (e) {
                     // In development, it can be useful to log complex cyclic
                     // objects to the console for inspection. This is fine for
                     // the console, but default `stringify` can't handle that.
                     // We workaround this by using a special replacer function
                     // to only log values of the root object and avoid cycles.
-                    return JSON.stringify(arg, (key, value) => {
+                    data = JSON.stringify(arg, (key, value) => {
                         if (key && typeof value === "object") {
                             return "<object>";
                         }
                         return value;
                     });
+		    jsonline["message"] = data
                 }
             } else {
-                return arg;
+                jsonline["message"] = arg
             }
         });
 
@@ -103,12 +109,14 @@ export class ConsoleLogger {
         // run.
         // Example line:
         // 2017-01-18T11:23:53.214Z W Failed to set badge count
-        let line = `${ts} ${level} ${args.join(' ')}\n`;
+	//
+        let line = JSON.stringify(jsonline)
         // Do some cleanup
         line = line.replace(/token=[a-zA-Z0-9-]+/gm, 'token=xxxxx');
         // Using + really is the quickest way in JS
         // http://jsperf.com/concat-vs-plus-vs-join
         this.logs += line;
+        this.logs += '\n';
     }
 
     /**
@@ -177,10 +185,10 @@ export class IndexedDBLogStore {
                 // Later on we need to query everything based on an instance id.
                 // In order to do this, we need to set up indexes "id".
                 logObjStore.createIndex("id", "id", { unique: false });
-
+                const ts = new Date().toISOString();
                 logObjStore.add(
                     this.generateLogEntry(
-                        new Date() + " ::: Log database was created.",
+			'{"timestamp": "'+ts+'", "body":"Log database was created"}'
                     ),
                 );
 

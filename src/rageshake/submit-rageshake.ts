@@ -178,7 +178,7 @@ async function collectBugReport(opts: IOpts = {}, gzipLogs = true) {
                 buf = pako.gzip(buf);
             }
 
-            body.append('compressed-log', new Blob([buf]), entry.id);
+            body.append('compressed-json-log', new Blob([buf]), entry.id);
         }
     }
 
