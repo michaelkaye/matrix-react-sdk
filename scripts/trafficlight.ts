@@ -22,14 +22,13 @@ import fetch from 'node-fetch';
 import * as crypto from 'crypto';
 import * as process from 'process';
 
-async function startClient(elementUrl: string) {
+async function startClient() {
     const browser = await chromium.launch({
         executablePath: "/usr/bin/chromium-browser",
         headless: false,
     });
     const page = await browser.newPage();
     page.setDefaultTimeout(15000);
-    await page.goto(elementUrl);
     return {browser, page};
 }
 
@@ -54,9 +53,9 @@ async function startRegisterLoop(trafficlightUrl: string, elementUrl: string) {
         const uuid = crypto.randomUUID();
         await registerAsClient(trafficlightUrl, uuid);
         const clientBaseUrl = `${trafficlightUrl}/client/${encodeURIComponent(uuid)}`;
-        const {page, browser} = await startClient(elementUrl);
+        const {page, browser} = await startClient();
         try {
-            await pollLoop(page, clientBaseUrl);
+            await pollLoop(page, clientBaseUrl, elementUrl);
         } catch (err) {
             console.log(err);
             console.log("------------------ stalling process");
@@ -82,7 +81,7 @@ type PollData = {
  *
  * Each cycle pulls one request from the trafficlight server and acts on it.
  */
-async function pollLoop(page: Page, clientBaseUrl: string): Promise<void> {
+async function pollLoop(page: Page, clientBaseUrl: string, elementUrl: string): Promise<void> {
     const pollUrl = `${clientBaseUrl}/poll`;
     const respondUrl = `${clientBaseUrl}/respond`;
 
@@ -99,7 +98,7 @@ async function pollLoop(page: Page, clientBaseUrl: string): Promise<void> {
         } else {
             let result : string | undefined;
             try {
-                result = await runAction(pollData.action, pollData.data, page);
+                result = await runAction(pollData.action, pollData.data, page, elementUrl);
             } catch (err) {
                 console.error(err);
                 result = 'error';
@@ -123,16 +122,16 @@ async function pollLoop(page: Page, clientBaseUrl: string): Promise<void> {
     }
 }
 
-async function runAction(action: string, data: Record<string, any>, page: Page): Promise<string | undefined> {
-    async function setLocationHash(hash: string) {
-        const url = new URL(await page.url());
+async function runAction(action: string, data: Record<string, any>, page: Page, elementUrl: string): Promise<string | undefined> {
+    async function openApp(hash: string) {
+        const url = new URL(elementUrl);
         url.hash = hash;
         await page.goto(url.toString());
     }
 
     switch (action) {
         case 'register':
-            await setLocationHash(`#/register`);
+            await openApp(`#/register`);
             await page.locator('.mx_ServerPicker_change').click();
             //page.locator('.mx_ServerPickerDialog_continue').should('be.visible');
             await page.locator('.mx_ServerPickerDialog_otherHomeserver').type(data['homeserver_url']['local']);
@@ -148,7 +147,7 @@ async function runAction(action: string, data: Record<string, any>, page: Page):
             await page.locator('.mx_UseCaseSelection_skip > .mx_AccessibleButton').click();
             return 'registered';
         case 'login':
-            await setLocationHash(`#/login`);
+            await openApp(`#/login`);
             await page.locator('#mx_LoginForm_username').waitFor({state: 'visible'});
             await page.locator('.mx_ServerPicker_change').click();
             await page.locator('.mx_ServerPickerDialog_otherHomeserver').type(data['homeserver_url']['local']);
