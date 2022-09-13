@@ -17,19 +17,24 @@ limitations under the License.
 /* eslint no-constant-condition: [ "error", { "checkLoops": false } ], prefer-template: 1 */
 
 import {chromium} from 'playwright';
-import type {Page} from 'playwright';
+import type {Page, BrowserContext, Browser} from 'playwright';
 import fetch from 'node-fetch';
 import * as crypto from 'crypto';
 import * as process from 'process';
 
-async function startClient() {
-    const browser = await chromium.launch({
+function startBrowser(): Promise<Browser> {
+    return chromium.launch({
         executablePath: "/usr/bin/chromium-browser",
         headless: false,
     });
-    const page = await browser.newPage();
+}
+
+async function openPage(browser: Browser): Promise<{page: Page, context: BrowserContext}> {
+    const context = await browser.newContext();
+    const page = await context.newPage();
     page.setDefaultTimeout(15000);
-    return {browser, page};
+    return {page, context};
+
 }
 
 async function registerAsClient(trafficlightUrl: string, uuid: string) {
@@ -49,17 +54,20 @@ async function registerAsClient(trafficlightUrl: string, uuid: string) {
 }
 
 async function startRegisterLoop(trafficlightUrl: string, elementUrl: string) {
+    const browser = await startBrowser();
     while (true) {
         const uuid = crypto.randomUUID();
         await registerAsClient(trafficlightUrl, uuid);
         const clientBaseUrl = `${trafficlightUrl}/client/${encodeURIComponent(uuid)}`;
-        const {page, browser} = await startClient();
+        const {page, context} = await openPage(browser);
         try {
             await pollLoop(page, clientBaseUrl, elementUrl);
         } catch (err) {
             console.log(err);
             console.log("------------------ stalling process");
             await new Promise(r => {});
+        } finally {
+            await context.close();
         }
     }
 }
