@@ -132,6 +132,33 @@ function runAction(action: string, data: JSONValue): string | undefined {
                 .type("{enter}");
             //cy.contains(data['message']).closest('mx_EventTile').should('have.class', 'mx_EventTile_receiptSent');
             return "message_sent";
+        case "change_room_history_visibility":
+            cy.get(".mx_RightPanel_roomSummaryButton").click();
+            cy.get(".mx_RoomSummaryCard_icon_settings").click();
+            cy.get(`[data-testid='settings-tab-ROOM_SECURITY_TAB']`).click();
+            // should be either "shared", "invited" or "joined"
+            // TODO: has doesn't seem to work
+            cy.get(`#historyVis-${data['historyVisibility']}`).parents("label").click();
+            cy.get(".mx_Dialog_cancelButton").click();
+            cy.get("[data-test-id=base-card-close-button]").click();
+            return "changed";
+        case "invite_user": {
+            cy.get(".mx_RightPanel_roomSummaryButton").click();
+            cy.get(".mx_RoomSummaryCard_icon_people").click();
+            cy.get(".mx_MemberList_invite").click();
+            cy.get(".mx_InviteDialog_addressBar input")
+                .type(`@${data["userId"]}`)
+                .type("{enter}");
+            cy.get(".mx_InviteDialog_goButton").click();
+            return "invited";
+        }
+        case "accept_invite":
+            cy.get(".mx_RoomTile").click();
+            cy.get(".mx_RoomPreviewBar_actions .mx_AccessibleButton_kind_primary").click();
+            return "accepted";
+        case "verify_message_in_timeline":
+            cy.contains(data["message"]);
+            return "verified";
         case 'exit':
             cy.log('Client asked to exit, test complete or server teardown');
             return;
