@@ -109,10 +109,10 @@ jobs:
           browser: chrome
           start: npx serve -p 8080 webapp
           wait-on: 'http://localhost:8080'
-          record: false
-          parallel: true
+#          record: true
+#          parallel: true
           command-prefix: 'yarn percy exec --parallel --'
-          ci-build-id: ${{ needs.prepare.outputs.uuid }}
+#          ci-build-id: ${{ needs.prepare.outputs.uuid }}
         env:
           # pass the Dashboard record key as an environment variable
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
