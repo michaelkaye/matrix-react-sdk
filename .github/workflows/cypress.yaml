@@ -112,9 +112,7 @@ jobs:
 #          parallel: true
           command-prefix: 'yarn percy exec --parallel --'
 #          ci-build-id: ${{ needs.prepare.outputs.uuid }}
-          reporter: 'cypress-multi-reporter'
-          reporterOptions: 
-            configFile: 'reporter-config.json'
+          config: '{"reporter":"cypress-multi-reporter", "reporterOptions": { "configFile": "reporter-config.json" } }'
         env:
           # pass the Dashboard record key as an environment variable
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
@@ -146,9 +144,6 @@ jobs:
           PERCY_PULL_REQUEST: ${{ needs.prepare.outputs.pr_id }}
           PERCY_PARALLEL_TOTAL: ${{ strategy.job-total }}
           PERCY_PARALLEL_NONCE: ${{ needs.prepare.outputs.uuid }}
-          # Enable custom reporter config for CI only.
-          ENABLE_ACTIONS_REPORT: 1
-          MATRIX_RUNNER: ${{ matrix.runner }}
       - name: Upload Artifact
         if: failure()
         uses: actions/upload-artifact@v2
