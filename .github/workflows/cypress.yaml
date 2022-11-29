@@ -112,7 +112,7 @@ jobs:
 #          parallel: true
           command-prefix: 'yarn percy exec --parallel --'
 #          ci-build-id: ${{ needs.prepare.outputs.uuid }}
-          config: '{"reporter":"cypress-multi-reporter", "reporterOptions": { "configFile": "reporter-config.json" } }'
+          config: '{"reporter":"cypress-multi-reporters", "reporterOptions": { "configFile": "reporter-config.json" } }'
         env:
           # pass the Dashboard record key as an environment variable
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
