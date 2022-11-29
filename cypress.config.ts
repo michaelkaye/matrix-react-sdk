@@ -28,7 +28,7 @@ export default defineConfig({
         },
         baseUrl: 'http://localhost:8080',
         experimentalSessionAndOrigin: true,
-        specPattern: 'cypress/e2e/**/*.{js,jsx,ts,tsx}',
+        specPattern: 'cypress/e2e/u*/*.{js,jsx,ts,tsx}', // Limit to a smaller number of tests
     },
     env: {
         // Docker tag to use for `ghcr.io/matrix-org/sliding-sync-proxy` image.
