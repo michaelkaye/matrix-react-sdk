@@ -157,7 +157,7 @@ jobs:
       - name: Debug reports
         if: always()
         run: |
-          ls -laR cypress/reports
+          ls -laR cypress
       
       - name: Upload reports
         if: always()
