@@ -112,6 +112,9 @@ jobs:
 #          parallel: true
           command-prefix: 'yarn percy exec --parallel --'
 #          ci-build-id: ${{ needs.prepare.outputs.uuid }}
+          reporter: 'cypress-multi-reporter'
+          reporterOptions: 
+            configFile: 'reporter-config.json'
         env:
           # pass the Dashboard record key as an environment variable
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
@@ -143,7 +146,9 @@ jobs:
           PERCY_PULL_REQUEST: ${{ needs.prepare.outputs.pr_id }}
           PERCY_PARALLEL_TOTAL: ${{ strategy.job-total }}
           PERCY_PARALLEL_NONCE: ${{ needs.prepare.outputs.uuid }}
-
+          # Enable custom reporter config for CI only.
+          ENABLE_ACTIONS_REPORT: 1
+          MATRIX_RUNNER: ${{ matrix.runner }}
       - name: Upload Artifact
         if: failure()
         uses: actions/upload-artifact@v2
@@ -154,6 +159,18 @@ jobs:
             cypress/videos
             cypress/synapselogs
 
+      - name: Debug reports
+        if: always()
+        run: |
+          ls -laR cypress/reports
+      
+      - name: Upload reports
+        if: always()
+        uses: actions/upload-artifact@v2
+        with:
+          name: cypress-reports
+          path: | 
+            cypress/reports
   report:
     name: Report results
     needs: tests
@@ -169,3 +186,13 @@ jobs:
           context: ${{ github.workflow }} / cypress (${{ github.event.workflow_run.event }} => ${{ github.event_name }})
           sha: ${{ github.event.workflow_run.head_sha }}
           target_url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
+      - uses: actions/download-artifact@v3	
+        with:
+          path: cypress-reports/
+          # name: if name unspecified, download all artifacts and unpacks into folders by name
+      - name: Debug reports
+        if: always()
+        run: |
+          ls -laR cypress-reports
+      # TODO: combine and upload!
+      
