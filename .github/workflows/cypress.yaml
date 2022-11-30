@@ -220,6 +220,7 @@ jobs:
             echo "Handling $file"
             trcli -y -h $TESTRAIL_URL \
                   --project-id $TESTRAIL_PROJECT_ID \
+                  --project "matrix-react-sdk (michaelk)" \
                   --username $TESTRAIL_USER \
                   --password $TESTRAIL_API_KEY \
                   parse_junit \
