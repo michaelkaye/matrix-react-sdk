@@ -202,6 +202,8 @@ jobs:
         run: |
           echo '{"name": "element-web cypress '$TEST_ID'"}' > body.json # TODO add description with more context? # TODO: reference the github PR id if available
           RUN_ID=`curl -X POST -d @body.json -u "$TESTRAIL_USER:$TESTRAIL_API_KEY" -H "Content-Type: application/json" "$TESTRAIL_URL/index.php?/api/v2/add_run/$TESTRAIL_PROJECT_ID" | jq '.id'`
+          PROJECT_NAME=`curl -X GET -u "$TESTRAIL_USER:$TESTRAIL_API_KEY" -H "Content-Type: application/json" "$TESTRAIL_URL/index.php?/api/v2/get_project/$TESTRAIL_PROJECT_ID" | jq '.name'`
+          echo "project_name=$PROJECT_NAME" >> $GITHUB_OUTPUT
           echo "run_id=$RUN_ID" >> $GITHUB_OUTPUT
       - name: setup python
         uses: actions/setup-python@v4
@@ -210,7 +212,7 @@ jobs:
       - run: pip install trcli
       - name: Upload junit files
         env:
-          TESTRAIL_PROJECT_ID: 5
+          TESTRAIL_PROJECT_NAME: ${{ steps.testrailprep.outputs.project_name }}
           TESTRAIL_URL: https://elementqa.testrail.io
           TESTRAIL_USER: ${{ secrets.TESTRAIL_USER }}
           TESTRAIL_API_KEY: ${{ secrets.TESTRAIL_API_KEY }}
@@ -219,8 +221,7 @@ jobs:
           for file in cypress-reports/cypress-reports/*; do
             echo "Handling $file"
             trcli -y -h $TESTRAIL_URL \
-                  --project-id $TESTRAIL_PROJECT_ID \
-                  --project "matrix-react-sdk (michaelk)" \
+                  --project "$TESTRAIL_PROJECT_NAME" \
                   --username $TESTRAIL_USER \
                   --password $TESTRAIL_API_KEY \
                   parse_junit \
