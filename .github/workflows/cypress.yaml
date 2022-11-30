@@ -219,7 +219,7 @@ jobs:
           for file in cypress-reports/cypress-reports/*; do
             echo "Handling $file"
             trcli -y -h $TESTRAIL_URL \
-                  --project $TESTRAIL_PROJECT_ID \
+                  --project_id $TESTRAIL_PROJECT_ID \
                   --username $TESTRAIL_USER \
                   --password $TESTRAIL_API_KEY \
                   parse_junit \
