@@ -80,7 +80,7 @@ jobs:
       fail-fast: false
       matrix:
         # Run 4 instances in Parallel
-        runner: [1, 2, 3, 4]
+        runner: [1, 2] # DO NOT MERGE WITHOUT REVERTING
     steps:
       - uses: actions/checkout@v2
         with:
@@ -168,7 +168,9 @@ jobs:
             cypress/results
   report:
     name: Report results
-    needs: tests
+    needs: 
+      - prepare
+      - tests
     runs-on: ubuntu-latest
     if: always()
     permissions:
@@ -189,5 +191,48 @@ jobs:
         if: always()
         run: |
           ls -laR cypress-reports
-      # TODO: combine and upload!
-      
+      - name: Create test run ID
+        id: testrailprep
+        env:
+          TESTRAIL_PROJECT_ID: 5
+          TEST_ID: ${{ github.run_id }} # TODO improve including PR / SHA / etc / match with testing etc
+          TESTRAIL_URL: https://elementqa.testrail.io
+          TESTRAIL_USER: ${{ secrets.TESTRAIL_USER }}
+          TESTRAIL_API_KEY: ${{ secrets.TESTRAIL_API_KEY }}
+        run: |
+	  echo '{"name": "element-web cypress '$TEST_ID'"}' > body.json # TODO add description with more context? # TODO: reference the github PR id if available
+          RUN_ID=`curl -X POST -d @body.json -u "$TESTRAIL_USER:$TESTRAIL_API_KEY" -H "Content-Type: application/json" "$TESTRAIL_URL/index.php?/api/v2/add_run/$TESTRAIL_PROJECT_ID" | jq '.id'`
+          echo "::set-output name=run_id::$RUN_ID"
+       - name: setup python
+         uses: actions/setup-python@v4
+         with:
+           python-version: "3.11"
+           cache: "pip"
+       - run: pip install trcli
+       - name: Upload junit files
+         env:
+           TESTRAIL_PROJECT_ID: 5
+           TESTRAIL_URL: https://elementqa.testrail.io
+           TESTRAIL_USER: ${{ secrets.TESTRAIL_USER }}
+           TESTRAIL_API_KEY: ${{ secrets.TESTRAIL_API_KEY }}
+           TESTRAIL_RUN_ID: ${{ steps.testrailprep.outputs.run_id }}
+         run: |
+           for file in cypress-reports/*; do
+             trcli -y -h $TESTRAIL_URL \
+                   --project $TESTRAIL_PROJECT_ID \
+                   --username $TESTRAIL_USER \
+                   --password $TESTRAIL_API_KEY \
+                   parse_junit \
+                   --run_id $TESTRAIL_RUN_ID
+                   -f $file
+       - name: Close test run
+         id: testrailpost
+         env:
+           TESTRAIL_URL: https://elementqa.testrail.io
+           TESTRAIL_USER: ${{ secrets.TESTRAIL_USER }}
+           TESTRAIL_API_KEY: ${{ secrets.TESTRAIL_API_KEY }}
+           TESTRAIL_RUN_ID: ${{ steps.testrailprep.outputs.run_id }}
+         run: |
+           curl -X POST -d '{}' -u "$TESTRAIL_USER:$TESTRAIL_API_KEY" -H "Content-Type: application/json" "$TESTRAIL_URL/index.php?/api/v2/close_run/$TESTRAIL_RUN_ID"
+       
+       
