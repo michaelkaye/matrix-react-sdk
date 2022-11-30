@@ -158,7 +158,6 @@ jobs:
         if: always()
         run: |
           ls -laR cypress
-      
       - name: Upload reports
         if: always()
         uses: actions/upload-artifact@v2
@@ -186,7 +185,7 @@ jobs:
       - uses: actions/download-artifact@v3
         with:
           path: cypress-reports
-          # name: if name unspecified, download all artifacts and unpacks into folders by name
+          name: cypress-reports
       - name: Debug reports
         if: always()
         run: |
@@ -219,7 +218,7 @@ jobs:
           TESTRAIL_API_KEY: ${{ secrets.TESTRAIL_API_KEY }}
           TESTRAIL_RUN_ID: ${{ steps.testrailprep.outputs.run_id }}
         run: |
-          for file in cypress-reports/cypress-reports/*; do
+          for file in cypress-reports/*; do
             echo "Handling $file in project $TESTRAIL_PROJECT_NAME" 
             trcli -y -h $TESTRAIL_URL \
                   --project "$TESTRAIL_PROJECT_NAME" \
@@ -240,6 +239,8 @@ jobs:
           TESTRAIL_API_KEY: ${{ secrets.TESTRAIL_API_KEY }}
           TESTRAIL_RUN_ID: ${{ steps.testrailprep.outputs.run_id }}
         run: |
-          curl -X POST -d '{}' -u "$TESTRAIL_USER:$TESTRAIL_API_KEY" -H "Content-Type: application/json" "$TESTRAIL_URL/index.php?/api/v2/close_run/$TESTRAIL_RUN_ID"
+          CLOSED_RUN=`curl -X POST -d '{}' -u "$TESTRAIL_USER:$TESTRAIL_API_KEY" -H "Content-Type: application/json" "$TESTRAIL_URL/index.php?/api/v2/close_run/$TESTRAIL_RUN_ID"`
+          ## DO YOU THINK THIS SHOULD BE AN ACTION YET?
+          if [ ! "0" eq `echo $CLOSED_RUN | jq .untested_count` ] ; then echo "::warning file=cypress.config.ts::`echo $CLOSED_RUN | jq .untested_count` tests missing from this cypress run"; fi
        
        
