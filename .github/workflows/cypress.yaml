@@ -224,6 +224,7 @@ jobs:
                   --password $TESTRAIL_API_KEY \
                   parse_junit \
                   --run-id $TESTRAIL_RUN_ID \
+                  --title "if you see this please check cypress build for run id not being provisioned" \
                   -f $file
           done
       - name: Close test run
