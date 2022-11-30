@@ -223,7 +223,7 @@ jobs:
                   --username $TESTRAIL_USER \
                   --password $TESTRAIL_API_KEY \
                   parse_junit \
-                  --run-id $TESTRAIL_RUN_ID
+                  --run-id $TESTRAIL_RUN_ID \
                   -f $file
           done
       - name: Close test run
