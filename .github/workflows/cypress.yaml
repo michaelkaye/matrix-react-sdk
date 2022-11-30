@@ -212,6 +212,7 @@ jobs:
       - run: pip install trcli
       - name: Upload junit files
         env:
+          TESTRAIL_PROJECT_ID: 5
           TESTRAIL_PROJECT_NAME: ${{ steps.testrailprep.outputs.project_name }}
           TESTRAIL_URL: https://elementqa.testrail.io
           TESTRAIL_USER: ${{ secrets.TESTRAIL_USER }}
@@ -219,9 +220,10 @@ jobs:
           TESTRAIL_RUN_ID: ${{ steps.testrailprep.outputs.run_id }}
         run: |
           for file in cypress-reports/cypress-reports/*; do
-            echo "Handling $file"
+            echo "Handling $file in project $TESTRAIL_PROJECT_NAME" 
             trcli -y -h $TESTRAIL_URL \
                   --project "$TESTRAIL_PROJECT_NAME" \
+                  --project-id "$TESTRAIL_PROJECT_ID" \
                   --username $TESTRAIL_USER \
                   --password $TESTRAIL_API_KEY \
                   parse_junit \
