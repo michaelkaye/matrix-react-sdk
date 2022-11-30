@@ -216,7 +216,7 @@ jobs:
           TESTRAIL_API_KEY: ${{ secrets.TESTRAIL_API_KEY }}
           TESTRAIL_RUN_ID: ${{ steps.testrailprep.outputs.run_id }}
         run: |
-          for file in cypress-reports/*; do
+          for file in cypress-reports/cypress-reports/*; do
             echo "Handling $file"
             trcli -y -h $TESTRAIL_URL \
                   --project $TESTRAIL_PROJECT_ID \
