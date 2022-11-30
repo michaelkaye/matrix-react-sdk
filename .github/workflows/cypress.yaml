@@ -112,7 +112,7 @@ jobs:
 #          parallel: true
           command-prefix: 'yarn percy exec --parallel --'
 #          ci-build-id: ${{ needs.prepare.outputs.uuid }}
-          config: '{"reporter":"cypress-multi-reporters", "reporterOptions": { "configFile": "reporter-config.json" } }'
+          config: '{"reporter":"cypress-multi-reporters", "reporterOptions": { "configFile": "cypress-ci-reporter-config.json" } }'
         env:
           # pass the Dashboard record key as an environment variable
           CYPRESS_RECORD_KEY: ${{ secrets.CYPRESS_RECORD_KEY }}
@@ -165,7 +165,7 @@ jobs:
         with:
           name: cypress-reports
           path: | 
-            cypress/reports
+            cypress/results
   report:
     name: Report results
     needs: tests
@@ -183,7 +183,7 @@ jobs:
           target_url: https://github.com/${{ github.repository }}/actions/runs/${{ github.run_id }}
       - uses: actions/download-artifact@v3	
         with:
-          path: cypress-reports/
+          path: cypress-reports
           # name: if name unspecified, download all artifacts and unpacks into folders by name
       - name: Debug reports
         if: always()
