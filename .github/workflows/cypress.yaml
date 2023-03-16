@@ -129,7 +129,7 @@ jobs:
                   browser: "${{ env.BROWSER_PATH }}"
                   start: npx serve -p 8080 webapp
                   wait-on: "http://localhost:8080"
-                  record: true
+                  record: false
                   parallel: true
                   command-prefix: "yarn percy exec --parallel --"
                   config: '{"reporter":"cypress-multi-reporters", "reporterOptions": { "configFile": "cypress-ci-reporter-config.json" } }'
